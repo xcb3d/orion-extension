@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Copy, Eye, EyeOff, Globe, Check, Pencil, Trash2, AlertTriangle } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { SecretEntry } from '../lib/vault';
 import { MessageType } from '../extension/messaging';
 import { EditCredentialForm } from './EditCredentialForm';
@@ -20,6 +20,12 @@ export function CredentialDetailView({ entry, onBack, onAutofill, onDelete, onUp
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Reset password state if the entry changes (e.g. after update)
+  useEffect(() => {
+    setDecryptedPassword(null);
+    setShowPassword(false);
+  }, [entry.id, entry.payload, entry.iv]);
 
   const fetchPassword = async (): Promise<string | null> => {
     if (decryptedPassword) return decryptedPassword;

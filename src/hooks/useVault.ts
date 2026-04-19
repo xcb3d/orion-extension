@@ -5,6 +5,7 @@ import { SuiSealClient } from '../lib/seal';
 import { config } from '../config';
 import { MessageType, SyncStatus } from '../extension/messaging';
 import { LocalStorageKey, SessionStorageKey } from '../extension/constants';
+import type { WrappedVaultPayload } from '../lib/crypto';
 
 export function useVault(suiAddress: string | null, pin: string | null) {
   const [vault, setVault] = useState<SecretEntry[]>([]);
@@ -155,14 +156,25 @@ export function useVault(suiAddress: string | null, pin: string | null) {
     const sessionRes: any = await new Promise(resolve =>
       chrome.runtime.sendMessage({ type: MessageType.GET_SESSION }, resolve)
     );
-    if (sessionRes?.cryptoSecret) {
+    if (sessionRes?.cryptoSecret && sessionRes?.dek) {
       const updatedVault: any = await new Promise(resolve =>
         chrome.runtime.sendMessage({ type: MessageType.GET_VAULT }, resolve)
       );
       if (Array.isArray(updatedVault)) {
         const { CryptoEngine } = await import('../lib/crypto');
-        const sealed = await CryptoEngine.encrypt(JSON.stringify(updatedVault), sessionRes.cryptoSecret);
-        await chrome.storage.local.set({ [LocalStorageKey.ENCRYPTED_VAULT]: sealed });
+        const vaultPackage = await CryptoEngine.encryptWithDEK(JSON.stringify(updatedVault), sessionRes.dek);
+        const encryptedDEK = await CryptoEngine.encrypt(sessionRes.dek, sessionRes.cryptoSecret);
+        
+        // Preserve recoveryDEK if exists
+        const oldRes = await chrome.storage.local.get([LocalStorageKey.ENCRYPTED_VAULT]);
+        const oldWrapped = oldRes[LocalStorageKey.ENCRYPTED_VAULT] as WrappedVaultPayload | undefined;
+        
+        const wrapped = { 
+          encryptedDEK, 
+          vaultPackage,
+          ...(oldWrapped?.recoveryDEK ? { recoveryDEK: oldWrapped.recoveryDEK } : {})
+        };
+        await chrome.storage.local.set({ [LocalStorageKey.ENCRYPTED_VAULT]: wrapped });
       }
     }
 
@@ -187,14 +199,25 @@ export function useVault(suiAddress: string | null, pin: string | null) {
     const sessionRes: any = await new Promise(resolve =>
       chrome.runtime.sendMessage({ type: MessageType.GET_SESSION }, resolve)
     );
-    if (sessionRes?.cryptoSecret) {
+    if (sessionRes?.cryptoSecret && sessionRes?.dek) {
       const updatedVault: any = await new Promise(resolve =>
         chrome.runtime.sendMessage({ type: MessageType.GET_VAULT }, resolve)
       );
       if (Array.isArray(updatedVault)) {
         const { CryptoEngine } = await import('../lib/crypto');
-        const sealed = await CryptoEngine.encrypt(JSON.stringify(updatedVault), sessionRes.cryptoSecret);
-        await chrome.storage.local.set({ [LocalStorageKey.ENCRYPTED_VAULT]: sealed });
+        const vaultPackage = await CryptoEngine.encryptWithDEK(JSON.stringify(updatedVault), sessionRes.dek);
+        const encryptedDEK = await CryptoEngine.encrypt(sessionRes.dek, sessionRes.cryptoSecret);
+        
+        // Preserve recoveryDEK if exists
+        const oldRes = await chrome.storage.local.get([LocalStorageKey.ENCRYPTED_VAULT]);
+        const oldWrapped = oldRes[LocalStorageKey.ENCRYPTED_VAULT] as WrappedVaultPayload | undefined;
+        
+        const wrapped = { 
+          encryptedDEK, 
+          vaultPackage,
+          ...(oldWrapped?.recoveryDEK ? { recoveryDEK: oldWrapped.recoveryDEK } : {})
+        };
+        await chrome.storage.local.set({ [LocalStorageKey.ENCRYPTED_VAULT]: wrapped });
       }
     }
 

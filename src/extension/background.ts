@@ -247,8 +247,8 @@ dispatcher
       const ctx = await getDecryptionContext();
       if (!ctx) return { error: 'Vault is locked. Cannot view password.' };
       const entry = payload as any;
-      if (!entry.iv || !entry.payload || !entry.salt) return { error: 'Invalid secret entry (missing encryption metadata).' };
-      const sealed = { ciphertext: entry.payload, iv: entry.iv, salt: entry.salt };
+      if (!entry.iv || !entry.payload) return { error: 'Invalid secret entry (missing encryption metadata).' };
+      const sealed = { ciphertext: entry.payload, iv: entry.iv, salt: entry.salt || '' };
       const decryptedPassword = await CryptoEngine.decryptWithDEK(sealed, ctx.dek);
       return { password: decryptedPassword };
     } catch (error: any) {
