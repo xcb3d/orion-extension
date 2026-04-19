@@ -31,9 +31,9 @@ export function LoginView({ isLoggingIn, onLogin, onExpand }: LoginViewProps) {
             <Key className="w-6 h-6 text-white" />
           </div>
           <div className="space-y-2">
-            <h1 className="text-lg font-semibold tracking-tight">Deploy Your Identity</h1>
+            <h1 className="text-lg font-semibold tracking-tight">Secure Your Digital Life</h1>
             <p className="text-[13px] text-muted leading-relaxed max-w-[280px] mx-auto">
-              Sign in with Google to derive your unique Sui address. No seed phrase required.
+              Next-gen decentralized password management.
             </p>
           </div>
           <button
