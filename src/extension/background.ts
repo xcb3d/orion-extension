@@ -374,10 +374,16 @@ dispatcher
         [LocalStorageKey.ORION_SEAL_OBJECT_ID]: pointer.objectId 
       });
 
-      // 4. Set session
+      // 4. Decrypt Vault using DEK and save to session
+      console.log('[RecoverPassword] Decrypting vault data...');
+      const decryptedVaultStr = await CryptoEngine.decryptWithDEK(wrapped.vaultPackage, dek);
+      const vault = JSON.parse(decryptedVaultStr);
+      await SessionManager.saveVault(vault);
+
+      // 5. Set session
       await SessionManager.setSession(newPin, 30, newCryptoSecret, dek);
 
-      // 5. Trigger sync
+      // 6. Trigger sync (to re-encrypt DEK with new KEK and update Walrus/Sui)
       executeSyncVault({ jwt, zkState, zkProof, objectId: pointer.objectId, sponsorUrl }).catch(err => {
         console.error('[RecoverPassword] Background sync failed:', err);
       });
